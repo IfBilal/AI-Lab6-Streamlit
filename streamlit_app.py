@@ -116,30 +116,29 @@ if st.button("Run Search"):
     else:
         path, cost, expansion_order = a_star(start, goal)
 
+    G = nx.DiGraph()
+    G.add_nodes_from(hospital_graph)
+    for node, neighbors in hospital_graph.items():
+        for neighbor, weight in neighbors.items():
+            G.add_edge(node, neighbor, weight=weight)
+
+    highlighted_path = path or []
+    path_edges = list(zip(highlighted_path, highlighted_path[1:]))
+    node_colors = ["orange" if node in highlighted_path else "lightblue" for node in G.nodes()]
+    edge_colors = ["red" if edge in path_edges else "gray" for edge in G.edges()]
+
+    fig, ax = plt.subplots(figsize=(10, 6))
+    nx.draw(G, locations, with_labels=True, node_color=node_colors, edge_color=edge_colors,
+            node_size=2000, font_size=9, arrows=True, ax=ax)
+    nx.draw_networkx_edge_labels(G, locations, nx.get_edge_attributes(G, "weight"), ax=ax)
+    ax.set_title(f"{algorithm} Solution Path")
+    ax.axis("off")
+    st.pyplot(fig)
+    plt.close(fig)
+
     if path is None:
         st.error("No path found.")
     else:
-        G = nx.DiGraph()
-        G.add_nodes_from(hospital_graph)
-        for node, neighbors in hospital_graph.items():
-            for neighbor, weight in neighbors.items():
-                G.add_edge(node, neighbor, weight=weight)
-
-        pos = locations
-        path_edges = list(zip(path, path[1:]))
-        node_colors = ["orange" if n in path else "lightblue" for n in G.nodes()]
-        edge_colors = ["red" if e in path_edges else "gray" for e in G.edges()]
-
-        fig, ax = plt.subplots(figsize=(10, 6))
-        nx.draw(G, pos, with_labels=True, node_color=node_colors, edge_color=edge_colors,
-                node_size=2000, font_size=9, arrows=True, ax=ax)
-        edge_labels = nx.get_edge_attributes(G, "weight")
-        nx.draw_networkx_edge_labels(G, pos, edge_labels, ax=ax)
-        ax.set_title(f"{algorithm} Solution Path")
-        ax.axis("off")
-        st.pyplot(fig)
-        plt.close(fig)
-
         st.subheader("Search Result")
         st.write(f"**Algorithm:** {algorithm}")
         st.write(f"**Expansion Order:** {' → '.join(expansion_order)}")
